@@ -5,6 +5,7 @@ JPGファイルのEXIFから撮影日時を読み取り、画像右下に日付�
 """
 
 import sys
+import os
 from PIL import Image, ImageDraw, ImageFont
 from PIL.ExifTags import TAGS
 from datetime import datetime
@@ -56,8 +57,8 @@ def add_date_to_image(input_path, output_path):
             print("エラー: EXIFから撮影日時を取得できませんでした")
             sys.exit(1)
         
-        # 日付を YYYY.MM.DD 形式にフォーマット（フィルムカメラ風）
-        date_str = date.strftime('%Y.%m.%d')
+        # 日付を YY MM DD 形式にフォーマット（フィルムカメラ風・7セグメント）
+        date_str = date.strftime('%y %m %d')
         
         # RGB モードに変換（必要に応じて）
         if img.mode != 'RGB':
@@ -69,28 +70,37 @@ def add_date_to_image(input_path, output_path):
         # 画像サイズを取得
         img_width, img_height = img.size
         
-        # フォント設定（フィルムカメラ風の等幅フォント）
+        # フォント設定（7セグメントディスプレイ風フォント）
         # 画像の幅に対して2%のサイズに設定（高解像度画像に対応）
         font_size = int(img_width * 0.02)
+        font_path = os.path.join(os.path.dirname(__file__), "fonts", "DSEG7Classic-Bold.ttf")
+        
         try:
-            # macOS - Courier New Bold
-            font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Courier New Bold.ttf", font_size)
+            # プロジェクトの7セグメントフォント
+            if os.path.exists(font_path):
+                font = ImageFont.truetype(font_path, font_size)
+            else:
+                raise FileNotFoundError("7セグメントフォントが見つかりません")
         except:
             try:
-                # Windows - Courier Bold
-                font = ImageFont.truetype("courbd.ttf", font_size)
+                # フォールバック: Courier New Bold
+                font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Courier New Bold.ttf", font_size)
             except:
                 try:
-                    # Linux - Liberation Mono Bold
-                    font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationMono-Bold.ttf", font_size)
+                    # Windows - Courier Bold
+                    font = ImageFont.truetype("courbd.ttf", font_size)
                 except:
-                    # 通常のCourier Newにフォールバック
                     try:
-                        font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Courier New.ttf", font_size)
+                        # Linux - Liberation Mono Bold
+                        font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationMono-Bold.ttf", font_size)
                     except:
-                        # デフォルトフォントを使用
-                        font = ImageFont.load_default()
-                        print("警告: システムフォントが見つかりません。デフォルトフォントを使用します")
+                        # 通常のCourier Newにフォールバック
+                        try:
+                            font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Courier New.ttf", font_size)
+                        except:
+                            # デフォルトフォントを使用
+                            font = ImageFont.load_default()
+                            print("警告: システムフォントが見つかりません。デフォルトフォントを使用します")
         
         # テキストのバウンディングボックスを取得
         bbox = draw.textbbox((0, 0), date_str, font=font)
