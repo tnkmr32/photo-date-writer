@@ -9,6 +9,52 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 from PIL.ExifTags import TAGS
 from datetime import datetime
+import numpy as np
+
+
+def apply_dodge_effect(base_img, text_mask, color=(255, 150, 80), intensity=0.7):
+    """
+    覆い焼き（Dodge）効果でテキストを合成する
+    
+    Args:
+        base_img: PIL Image（ベース画像、RGBモード）
+        text_mask: PIL Image（テキストマスク、Lモード。白い部分がテキスト）
+        color: tuple（覆い焼きに使用する色のRGB値）
+        intensity: float（効果の強度 0.0-1.0）
+    
+    Returns:
+        PIL Image: 覆い焼き効果を適用した画像
+    """
+    # PIL ImageをNumPy配列に変換
+    base_array = np.array(base_img, dtype=np.float32)
+    mask_array = np.array(text_mask, dtype=np.float32) / 255.0  # 0.0-1.0に正規化
+    
+    # カラー値を0.0-1.0に正規化
+    color_normalized = np.array(color, dtype=np.float32) / 255.0
+    
+    # 覆い焼き効果を適用
+    # Dodge formula: Result = Base / (1 - Blend)
+    # ただし、安全な実装として: Result = Base / (1 - Blend * intensity)
+    result = base_array.copy()
+    
+    for i in range(3):  # RGB各チャンネルに対して
+        # ブレンド値（マスク × カラー × 強度）
+        blend = mask_array * color_normalized[i] * intensity
+        
+        # ゼロ除算を避けるため、blend が 1.0 に近い場合は最大値に
+        # 覆い焼き計算: base / (1 - blend)
+        denominator = 1.0 - blend
+        denominator = np.maximum(denominator, 0.001)  # 最小値を設定してゼロ除算回避
+        
+        channel_result = base_array[:, :, i] / denominator
+        
+        # 255でクリップ
+        result[:, :, i] = np.minimum(channel_result, 255.0)
+    
+    # NumPy配列をPIL Imageに変換
+    result_img = Image.fromarray(result.astype(np.uint8))
+    
+    return result_img
 
 
 def get_date_from_exif(image):
@@ -113,8 +159,13 @@ def add_date_to_image(input_path, output_path):
         x = img_width - text_width - horizontal_margin
         y = img_height - text_height - vertical_margin
         
-        # フィルムカメラ風のオレンジ色で日付を描画（背景なし）
-        draw.text((x, y), date_str, font=font, fill=(255, 150, 80))
+        # テキストマスクを作成（覆い焼き効果用）
+        text_mask = Image.new('L', (img_width, img_height), 0)
+        mask_draw = ImageDraw.Draw(text_mask)
+        mask_draw.text((x, y), date_str, font=font, fill=255)
+        
+        # 覆い焼き効果を適用してテキストを合成
+        img = apply_dodge_effect(img, text_mask, color=(255, 150, 80), intensity=0.7)
         
         # 画像を保存（品質95で保存）
         img.save(output_path, 'JPEG', quality=95)
