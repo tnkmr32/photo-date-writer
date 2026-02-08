@@ -41,3 +41,7 @@ env/
 
 # Environment variables
 .env
+
+# Project specific
+.steering/
+output/
