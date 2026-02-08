@@ -57,8 +57,8 @@ def add_date_to_image(input_path, output_path):
             print("エラー: EXIFから撮影日時を取得できませんでした")
             sys.exit(1)
         
-        # 日付を YY MM DD 形式にフォーマット（フィルムカメラ風・7セグメント）
-        date_str = date.strftime('%y %m %d')
+        # 日付を `YY    MM    DD` 形式にフォーマット（フィルムカメラ風・7セグメント）
+        date_str = date.strftime('%y    %m    %d')
         
         # RGB モードに変換（必要に応じて）
         if img.mode != 'RGB':
@@ -73,7 +73,7 @@ def add_date_to_image(input_path, output_path):
         # フォント設定（7セグメントディスプレイ風フォント）
         # 画像の幅に対して2%のサイズに設定（高解像度画像に対応）
         font_size = int(img_width * 0.02)
-        font_path = os.path.join(os.path.dirname(__file__), "fonts", "DSEG7Classic-Bold.ttf")
+        font_path = os.path.join(os.path.dirname(__file__), "fonts", "DSEG7ClassicMini-BoldItalic.ttf")
         
         try:
             # プロジェクトの7セグメントフォント
@@ -108,7 +108,7 @@ def add_date_to_image(input_path, output_path):
         text_height = bbox[3] - bbox[1]
         
         # 右下の位置を計算（マージンを水平・垂直で分離）
-        horizontal_margin = int(img_width * 0.01)  # 右端からのマージン
+        horizontal_margin = int(img_width * 0.04)  # 右端からのマージン
         vertical_margin = int(img_width * 0.02)    # 下端からのマージン
         x = img_width - text_width - horizontal_margin
         y = img_height - text_height - vertical_margin
