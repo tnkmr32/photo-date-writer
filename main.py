@@ -114,7 +114,7 @@ def add_date_to_image(input_path, output_path):
         y = img_height - text_height - vertical_margin
         
         # フィルムカメラ風のオレンジ色で日付を描画（背景なし）
-        draw.text((x, y), date_str, font=font, fill=(255, 120, 0))
+        draw.text((x, y), date_str, font=font, fill=(255, 150, 80))
         
         # 画像を保存（品質95で保存）
         img.save(output_path, 'JPEG', quality=95)
