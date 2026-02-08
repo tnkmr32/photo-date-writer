@@ -20,7 +20,7 @@ allowed-tools: Bash
 ## 出力フォーマット
 
 計画は、Markdown形式で出力されます。
-出力先は`.steering/[yyyyMMdd]_[同じ日付内で連番]_[完結なタイトル（英語でスネークケース）]/plan.md`とします。
+出力先は`.steering/[yyyyMMdd]_[同じ日付内で連番]_[完結なタイトル（英語でケバブケース）]/plan.md`とします。
 
 ## 使用例
 
