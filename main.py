@@ -56,8 +56,8 @@ def add_date_to_image(input_path, output_path):
             print("エラー: EXIFから撮影日時を取得できませんでした")
             sys.exit(1)
         
-        # 日付を YYYY/MM/DD 形式にフォーマット
-        date_str = date.strftime('%Y/%m/%d')
+        # 日付を YYYY.MM.DD 形式にフォーマット（フィルムカメラ風）
+        date_str = date.strftime('%Y.%m.%d')
         
         # RGB モードに変換（必要に応じて）
         if img.mode != 'RGB':
@@ -66,57 +66,41 @@ def add_date_to_image(input_path, output_path):
         # 描画用オブジェクトを作成
         draw = ImageDraw.Draw(img)
         
-        # フォント設定
-        font_size = 32
+        # 画像サイズを取得
+        img_width, img_height = img.size
+        
+        # フォント設定（フィルムカメラ風の等幅フォント）
+        # 画像の幅に対して2%のサイズに設定（高解像度画像に対応）
+        font_size = int(img_width * 0.02)
         try:
-            # システムフォントを使用（macOS/Linux）
-            font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", font_size)
+            # macOS - Courier New
+            font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Courier New.ttf", font_size)
         except:
             try:
-                # Windowsの場合
-                font = ImageFont.truetype("arial.ttf", font_size)
+                # Windows
+                font = ImageFont.truetype("cour.ttf", font_size)
             except:
-                # デフォルトフォントを使用
-                font = ImageFont.load_default()
-                print("警告: システムフォントが見つかりません。デフォルトフォントを使用します")
+                try:
+                    # Linux
+                    font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf", font_size)
+                except:
+                    # デフォルトフォントを使用
+                    font = ImageFont.load_default()
+                    print("警告: システムフォントが見つかりません。デフォルトフォントを使用します")
         
         # テキストのバウンディングボックスを取得
         bbox = draw.textbbox((0, 0), date_str, font=font)
         text_width = bbox[2] - bbox[0]
         text_height = bbox[3] - bbox[1]
         
-        # 画像サイズを取得
-        img_width, img_height = img.size
+        # 右下の位置を計算（マージンを水平・垂直で分離）
+        horizontal_margin = int(img_width * 0.01)  # 右端からのマージン
+        vertical_margin = int(img_width * 0.02)    # 下端からのマージン
+        x = img_width - text_width - horizontal_margin
+        y = img_height - text_height - vertical_margin
         
-        # 右下の位置を計算（マージン20px）
-        margin = 20
-        x = img_width - text_width - margin
-        y = img_height - text_height - margin
-        
-        # 背景の半透明矩形を描画（可読性向上）
-        padding = 10
-        background_bbox = [
-            x - padding,
-            y - padding,
-            x + text_width + padding,
-            y + text_height + padding
-        ]
-        
-        # 半透明の黒背景を作成
-        overlay = Image.new('RGBA', img.size, (255, 255, 255, 0))
-        overlay_draw = ImageDraw.Draw(overlay)
-        overlay_draw.rectangle(background_bbox, fill=(0, 0, 0, 128))
-        
-        # RGB画像をRGBAに変換して合成
-        img = img.convert('RGBA')
-        img = Image.alpha_composite(img, overlay)
-        img = img.convert('RGB')
-        
-        # 再度描画オブジェクトを作成
-        draw = ImageDraw.Draw(img)
-        
-        # 白文字で日付を描画
-        draw.text((x, y), date_str, font=font, fill=(255, 255, 255))
+        # フィルムカメラ風のオレンジ色で日付を描画（背景なし）
+        draw.text((x, y), date_str, font=font, fill=(255, 120, 0))
         
         # 画像を保存（品質95で保存）
         img.save(output_path, 'JPEG', quality=95)
