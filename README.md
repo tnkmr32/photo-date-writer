@@ -17,21 +17,42 @@ JPGファイルのEXIFから撮影日時を読み取り、画像の右下に日�
 ## インストール
 
 ```bash
-# 必要なライブラリをインストール
+# 1. 仮想環境を作成（初回のみ）
+python3 -m venv venv
+
+# 2. 仮想環境をアクティベート（毎回必要）
+source venv/bin/activate
+
+# 3. 必要なライブラリをインストール（初回のみ）
 pip install -r requirements.txt
 ```
 
 ## 使い方
 
+**重要**: プログラムを実行する前に、毎回仮想環境をアクティベートする必要があります。
+
 ```bash
+# 仮想環境をアクティベート（毎回必要）
+source venv/bin/activate
+
+# プログラムを実行
 python main.py <入力ファイル.jpg> <出力ファイル.jpg>
+
+# 作業終了後、仮想環境を無効化（オプション）
+deactivate
 ```
 
 ### 例
 
 ```bash
+# 仮想環境をアクティベート
+source venv/bin/activate
+
 # 単一ファイルを処理
 python main.py input.jpg output.jpg
+
+# samples ディレクトリの画像を処理
+python main.py samples/photo.jpg samples/output.jpg
 ```
 
 ## 仕様
