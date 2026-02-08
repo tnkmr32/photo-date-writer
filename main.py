@@ -73,20 +73,24 @@ def add_date_to_image(input_path, output_path):
         # 画像の幅に対して2%のサイズに設定（高解像度画像に対応）
         font_size = int(img_width * 0.02)
         try:
-            # macOS - Courier New
-            font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Courier New.ttf", font_size)
+            # macOS - Courier New Bold
+            font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Courier New Bold.ttf", font_size)
         except:
             try:
-                # Windows
-                font = ImageFont.truetype("cour.ttf", font_size)
+                # Windows - Courier Bold
+                font = ImageFont.truetype("courbd.ttf", font_size)
             except:
                 try:
-                    # Linux
-                    font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf", font_size)
+                    # Linux - Liberation Mono Bold
+                    font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationMono-Bold.ttf", font_size)
                 except:
-                    # デフォルトフォントを使用
-                    font = ImageFont.load_default()
-                    print("警告: システムフォントが見つかりません。デフォルトフォントを使用します")
+                    # 通常のCourier Newにフォールバック
+                    try:
+                        font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Courier New.ttf", font_size)
+                    except:
+                        # デフォルトフォントを使用
+                        font = ImageFont.load_default()
+                        print("警告: システムフォントが見つかりません。デフォルトフォントを使用します")
         
         # テキストのバウンディングボックスを取得
         bbox = draw.textbbox((0, 0), date_str, font=font)
