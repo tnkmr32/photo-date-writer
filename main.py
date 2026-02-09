@@ -85,6 +85,39 @@ def get_date_from_exif(image):
         return None
 
 
+def is_grayscale_image(img):
+    """
+    画像がモノクロ（グレースケール）かどうかを判定する
+
+    Args:
+        img: PIL Imageオブジェクト
+
+    Returns:
+        bool: モノクロの場合True、カラーの場合False
+    """
+    # 1. 画像モードで判定
+    if img.mode in ('L', 'LA', '1'):
+        return True
+
+    # 2. RGB画像の場合、ピクセルをサンプリングして判定
+    if img.mode in ('RGB', 'RGBA'):
+        # 効率化のため、画像を縮小してサンプリング
+        sample = img.resize((100, 100))
+        pixels = np.array(sample)
+
+        # R, G, Bチャンネルを取得
+        r, g, b = pixels[:,:,0], pixels[:,:,1], pixels[:,:,2]
+
+        # R=G=Bのピクセルの割合を計算
+        grayscale_pixels = np.sum((r == g) & (g == b))
+        total_pixels = r.size
+
+        # 95%以上がグレースケールならモノクロと判定
+        return (grayscale_pixels / total_pixels) > 0.95
+
+    return False
+
+
 def add_date_to_image(input_path, output_path):
     """
     画像に日付を印字して保存する
@@ -109,6 +142,17 @@ def add_date_to_image(input_path, output_path):
         # RGB モードに変換（必要に応じて）
         if img.mode != 'RGB':
             img = img.convert('RGB')
+        
+        # モノクロ画像かどうかを判定
+        is_grayscale = is_grayscale_image(img)
+        
+        # 印字色と強度を選択
+        if is_grayscale:
+            text_color = (255, 255, 255)  # 白
+            dodge_intensity = 0.9
+        else:
+            text_color = (255, 150, 80)   # オレンジ
+            dodge_intensity = 0.7
         
         # 描画用オブジェクトを作成
         draw = ImageDraw.Draw(img)
@@ -164,8 +208,8 @@ def add_date_to_image(input_path, output_path):
         mask_draw = ImageDraw.Draw(text_mask)
         mask_draw.text((x, y), date_str, font=font, fill=255)
         
-        # 覆い焼き効果を適用してテキストを合成
-        img = apply_dodge_effect(img, text_mask, color=(255, 150, 80), intensity=0.7)
+        # 覆い焼き効果を適用してテキストを合成（選択した色と強度を使用）
+        img = apply_dodge_effect(img, text_mask, color=text_color, intensity=dodge_intensity)
         
         # 画像を保存（品質95で保存）
         img.save(output_path, 'JPEG', quality=95)
