@@ -12,44 +12,37 @@ from datetime import datetime
 import numpy as np
 
 
-def apply_dodge_effect(base_img, text_mask, color=(255, 150, 80), intensity=0.7):
+def apply_film_date_effect(base_img, text_mask, color=(255, 150, 80), intensity=0.5):
     """
-    覆い焼き（Dodge）効果でテキストを合成する
+    フィルム写真の日付印字を再現する効果を適用
+    
+    フィルムカメラの日付機能は、フィルムに直接光を照射して日付を焼き込む。
+    プリント時には、その部分の輝度が高くなる。この処理を再現する。
     
     Args:
         base_img: PIL Image（ベース画像、RGBモード）
         text_mask: PIL Image（テキストマスク、Lモード。白い部分がテキスト）
-        color: tuple（覆い焼きに使用する色のRGB値）
+        color: tuple（日付の色のRGB値）
         intensity: float（効果の強度 0.0-1.0）
     
     Returns:
-        PIL Image: 覆い焼き効果を適用した画像
+        PIL Image: 輝度増加効果を適用した画像
     """
     # PIL ImageをNumPy配列に変換
     base_array = np.array(base_img, dtype=np.float32)
     mask_array = np.array(text_mask, dtype=np.float32) / 255.0  # 0.0-1.0に正規化
     
-    # カラー値を0.0-1.0に正規化
-    color_normalized = np.array(color, dtype=np.float32) / 255.0
+    # カラー値をNumPy配列に変換
+    color_array = np.array(color, dtype=np.float32)
     
-    # 覆い焼き効果を適用
-    # Dodge formula: Result = Base / (1 - Blend)
-    # ただし、安全な実装として: Result = Base / (1 - Blend * intensity)
-    result = base_array.copy()
+    # マスクを3次元に拡張（RGB各チャンネル用）
+    mask_3d = mask_array[:, :, np.newaxis]
     
-    for i in range(3):  # RGB各チャンネルに対して
-        # ブレンド値（マスク × カラー × 強度）
-        blend = mask_array * color_normalized[i] * intensity
-        
-        # ゼロ除算を避けるため、blend が 1.0 に近い場合は最大値に
-        # 覆い焼き計算: base / (1 - blend)
-        denominator = 1.0 - blend
-        denominator = np.maximum(denominator, 0.001)  # 最小値を設定してゼロ除算回避
-        
-        channel_result = base_array[:, :, i] / denominator
-        
-        # 255でクリップ
-        result[:, :, i] = np.minimum(channel_result, 255.0)
+    # 輝度加算: Base + (Mask × Color × Intensity)
+    result = base_array + (mask_3d * color_array * intensity)
+    
+    # 255でクリップ
+    result = np.clip(result, 0, 255)
     
     # NumPy配列をPIL Imageに変換
     result_img = Image.fromarray(result.astype(np.uint8))
@@ -149,10 +142,10 @@ def add_date_to_image(input_path, output_path):
         # 印字色と強度を選択
         if is_grayscale:
             text_color = (255, 255, 255)  # 白
-            dodge_intensity = 0.9
+            film_intensity = 0.7
         else:
             text_color = (255, 150, 80)   # オレンジ
-            dodge_intensity = 0.7
+            film_intensity = 0.5
         
         # 描画用オブジェクトを作成
         draw = ImageDraw.Draw(img)
@@ -203,13 +196,13 @@ def add_date_to_image(input_path, output_path):
         x = img_width - text_width - horizontal_margin
         y = img_height - text_height - vertical_margin
         
-        # テキストマスクを作成（覆い焼き効果用）
+        # テキストマスクを作成（フィルム印字効果用）
         text_mask = Image.new('L', (img_width, img_height), 0)
         mask_draw = ImageDraw.Draw(text_mask)
         mask_draw.text((x, y), date_str, font=font, fill=255)
         
-        # 覆い焼き効果を適用してテキストを合成（選択した色と強度を使用）
-        img = apply_dodge_effect(img, text_mask, color=text_color, intensity=dodge_intensity)
+        # フィルム印字効果を適用してテキストを合成（選択した色と強度を使用）
+        img = apply_film_date_effect(img, text_mask, color=text_color, intensity=film_intensity)
         
         # 画像を保存（品質95で保存）
         img.save(output_path, 'JPEG', quality=95)
