@@ -124,6 +124,33 @@ def is_grayscale_image(img):
     return False
 
 
+def check_aspect_ratio(img, tolerance=0.02):
+    """
+    画像のアスペクト比が3:2（または2:3）かを判定する
+    
+    Args:
+        img: PIL Imageオブジェクト
+        tolerance: 許容誤差（デフォルト: 0.02 = 2%）
+    
+    Returns:
+        bool: 範囲内の場合True、範囲外の場合False
+    """
+    width, height = img.size
+    ratio = width / height
+    
+    # 3:2 (landscape) の場合: ratio ≈ 1.5
+    expected_landscape = 3.0 / 2.0  # 1.5
+    
+    # 2:3 (portrait) の場合: ratio ≈ 0.667
+    expected_portrait = 2.0 / 3.0  # 0.667
+    
+    # tolerance範囲内かチェック
+    is_landscape = abs(ratio - expected_landscape) <= (expected_landscape * tolerance)
+    is_portrait = abs(ratio - expected_portrait) <= (expected_portrait * tolerance)
+    
+    return is_landscape or is_portrait
+
+
 def add_date_to_image(input_path, output_path):
     """
     画像に日付を印字して保存する
@@ -135,6 +162,15 @@ def add_date_to_image(input_path, output_path):
     try:
         # 画像を開く
         img = Image.open(input_path)
+        
+        # アスペクト比をチェック
+        if not check_aspect_ratio(img):
+            width, height = img.size
+            actual_ratio = width / height
+            print("警告: 画像のアスペクト比が3:2ではありません")
+            print(f"画像サイズ: {width}x{height}")
+            print(f"アスペクト比: {actual_ratio:.3f} (期待値: 1.500 または 0.667)")
+            sys.exit(1)
         
         # EXIFから日付を取得
         date = get_date_from_exif(img)
