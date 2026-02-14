@@ -44,4 +44,5 @@ env/
 
 # Project specific
 .steering/
+input/
 output/
