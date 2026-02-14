@@ -78,6 +78,19 @@ def get_date_from_exif(image):
         return None
 
 
+def is_portrait(img):
+    """
+    画像がportrait（縦向き）かどうかを判定する
+
+    Args:
+        img: PIL Imageオブジェクト
+
+    Returns:
+        bool: portraitの場合True、landscapeの場合False
+    """
+    return img.height > img.width
+
+
 def is_grayscale_image(img):
     """
     画像がモノクロ（グレースケール）かどうかを判定する
@@ -135,6 +148,13 @@ def add_date_to_image(input_path, output_path):
         # RGB モードに変換（必要に応じて）
         if img.mode != 'RGB':
             img = img.convert('RGB')
+        
+        # Portrait画像かどうかを判定
+        is_portrait_img = is_portrait(img)
+        
+        # Portrait画像の場合、左に90度回転（反時計回り）
+        if is_portrait_img:
+            img = img.rotate(90, expand=True)
         
         # モノクロ画像かどうかを判定
         is_grayscale = is_grayscale_image(img)
@@ -203,6 +223,10 @@ def add_date_to_image(input_path, output_path):
         
         # フィルム印字効果を適用してテキストを合成（選択した色と強度を使用）
         img = apply_film_date_effect(img, text_mask, color=text_color, intensity=film_intensity)
+        
+        # Portrait画像の場合、左に270度回転して元に戻す（反時計回り）
+        if is_portrait_img:
+            img = img.rotate(270, expand=True)
         
         # 画像を保存（品質95で保存）
         img.save(output_path, 'JPEG', quality=95)
