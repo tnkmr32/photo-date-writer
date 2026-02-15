@@ -96,7 +96,7 @@ python main.py ~/Pictures/photo.jpg ~/Desktop/photo_with_date.jpg
 ### 日付印字仕様
 
 - **日付フォーマット**: `YY    MM    DD`（7セグメント風表示）
-- **配置位置**: 画像右下（マージン: 60px）
+- **配置位置**: 画像右下
 - **フォントサイズ**: 40pt（BM-HANNA_TTF.ttf）
 - **色**:
   - グレースケール画像: オレンジ系 `(255, 150, 80)`
