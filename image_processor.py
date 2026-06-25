@@ -104,8 +104,8 @@ def add_date_to_image(input_path, output_path):
         text_height = bbox[3] - bbox[1]
         
         # 右下の位置を計算（マージンを水平・垂直で分離）
-        horizontal_margin = int(img_width * 0.06)  # 右端からのマージン
-        vertical_margin = int(img_width * 0.03)    # 下端からのマージン
+        horizontal_margin = int(img_width * 0.08)  # 右端からのマージン
+        vertical_margin = int(img_width * 0.04)    # 下端からのマージン
         x = img_width - text_width - horizontal_margin
         y = img_height - text_height - vertical_margin
         
